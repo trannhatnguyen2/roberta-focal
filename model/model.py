@@ -2,7 +2,7 @@ import torch.nn as nn
 from transformers import RobertaModel
 
 # Model with extra layers on top of RoBERTa
-class ROBERTAClassifier(torch.nn.Module):
+class ROBERTAClassifier(nn.Module):
     def __init__(self, dropout_rate=0.3):
         super(ROBERTAClassifier, self).__init__()
         
