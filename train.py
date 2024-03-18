@@ -15,11 +15,11 @@ from torch.optim import AdamW, lr_scheduler
 from torch.utils.data import Dataset, DataLoader
 from torchvision.ops import sigmoid_focal_loss
 # from model.model import SentimentClassifier
-from model.model import ROBERTAClassifier
+from model.model import PhoBertFeedForward_base
 from loader.dataset import SentimentDataset
 from losses.loss import FocalLoss
 
-from transformers import get_linear_schedule_with_warmup, AutoTokenizer, AutoModel, logging, RobertaTokenizer
+from transformers import get_linear_schedule_with_warmup, AutoTokenizer, AutoModel, logging
 from sklearn.model_selection import train_test_split
 import warnings
 import argparse
@@ -127,10 +127,10 @@ if __name__ == '__main__':
     
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     # model = SentimentClassifier(n_classes=2).to(device)
-    model = ROBERTAClassifier().to(device)
-    # tokenizer = AutoTokenizer.from_pretrained("vinai/phobert-base-v2", use_fast=True)
+    model = PhoBertFeedForward_base(from_pretrained=True, freeze_backbone=False, drop_out=0.1, out_channels=2).to(device)
+    tokenizer = AutoTokenizer.from_pretrained("vinai/phobert-base-v2", use_fast=True)
     # tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased", use_fast=True)
-    tokenizer = RobertaTokenizer.from_pretrained("roberta-base", use_fast=True)
+    # tokenizer = RobertaTokenizer.from_pretrained("roberta-base", use_fast=True)
     X_train,X_test, y_train, y_test = train_test_split(df, df['label'],test_size = 0.1, random_state= 42)
     X_train, X_val, y_train, y_val = train_test_split(X_train,y_train,test_size = 0.1, random_state= 42)
     train_df = pd.concat([X_train, X_val], axis=0, ignore_index=True)

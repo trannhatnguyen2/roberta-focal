@@ -1,25 +1,25 @@
+import torch
 import torch.nn as nn
-from transformers import RobertaModel
+from transformers import RobertaModel, RobertaConfig
 
-# Model with extra layers on top of RoBERTa
-class ROBERTAClassifier(nn.Module):
-    def __init__(self, dropout_rate=0.3):
-        super(ROBERTAClassifier, self).__init__()
+class PhoBertFeedForward_base(nn.Module):
+    def __init__(self, from_pretrained:bool=True, freeze_backbone:bool=False, drop_out:float=0.1, out_channels:int=2):
+        super(PhoBertFeedForward_base, self).__init__()
+        phobert_config = RobertaConfig.from_pretrained("vinai/phobert-base-v2")
+        self.bert = RobertaModel(config=phobert_config)
+        if from_pretrained:
+          self.bert = RobertaModel.from_pretrained("vinai/phobert-base-v2")
+        self.classifier = nn.Sequential(
+            nn.Linear(768, 768),
+            nn.Dropout(drop_out),
+            nn.Linear(768, out_channels))
         
-        self.roberta = RobertaModel.from_pretrained('roberta-base')
-        self.d1 = nn.Dropout(dropout_rate)
-        self.l1 = nn.Linear(768, 64)
-        self.bn1 = nn.LayerNorm(64)
-        self.d2 = nn.Dropout(dropout_rate)
-        self.l2 = nn.Linear(64, 2)
-        
-    def forward(self, input_ids, attention_mask):
-        _, x = self.roberta(input_ids=input_ids, attention_mask=attention_mask)
-        x = self.d1(x)
-        x = self.l1(x)
-        x = self.bn1(x)
-        x = nn.Tanh()(x)
-        x = self.d2(x)
-        x = self.l2(x)
-        
-        return x  
+        if freeze_backbone:
+            for param in self.bert.parameters():
+                param.require_grad = False
+    
+    def forward(self, input_ids, attn_mask):
+        bert_feature = self.bert(input_ids=input_ids, attention_mask=attn_mask)
+        last_hidden_cls = bert_feature[0][:, 0, :]
+        logits = self.classifier(last_hidden_cls)
+        return logits
