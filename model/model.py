@@ -1,4 +1,4 @@
-import nn as nn
+import torch.nn as nn
 from transformers import RobertaModel
 
 # Model with extra layers on top of RoBERTa
